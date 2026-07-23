@@ -17,8 +17,6 @@ services:
       - ./initdb:/docker-entrypoint-initdb.d:ro
     command: postgres -c config_file=/etc/postgresql/postgresql.conf
     restart: always
-    security_opt:
-      - no-new-privileges:true
     shm_size: 8g
     deploy:
       resources:
