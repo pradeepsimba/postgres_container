@@ -15,14 +15,49 @@ services:
       - ./data:/var/lib/postgresql
       - ./postgres.conf:/etc/postgresql/postgresql.conf:ro
       - ./initdb:/docker-entrypoint-initdb.d:ro
-    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    # postgres.conf stays the hand-maintained base; the settings that MUST track
+    # the host's size are injected here instead, because command-line -c flags
+    # override the config file. List form (not a string) so no shell splitting
+    # is involved. Values come from .env, written by deploy.sh from the real
+    # host specs — the defaults below are a safe 4GB/2-core fallback so this
+    # file still works if .env is missing.
+    command:
+      - postgres
+      - -c
+      - config_file=/etc/postgresql/postgresql.conf
+      - -c
+      - shared_buffers=${PG_SHARED_BUFFERS:-1GB}
+      - -c
+      - effective_cache_size=${PG_EFFECTIVE_CACHE:-2GB}
+      - -c
+      - work_mem=${PG_WORK_MEM:-8MB}
+      - -c
+      - maintenance_work_mem=${PG_MAINT_WORK_MEM:-256MB}
+      - -c
+      - max_worker_processes=${PG_MAX_WORKERS:-2}
+      - -c
+      - max_parallel_workers=${PG_MAX_PARALLEL:-2}
+      - -c
+      - max_parallel_workers_per_gather=${PG_PARALLEL_PER_GATHER:-1}
+      - -c
+      - max_parallel_maintenance_workers=${PG_PARALLEL_MAINT:-1}
+      - -c
+      - autovacuum_max_workers=${PG_AUTOVACUUM_WORKERS:-2}
     restart: always
-    shm_size: 8g
+    # /dev/shm must cover shared_buffers (parallel workers use it too); Docker's
+    # 64MB default is far too small for Postgres.
+    shm_size: ${DB_SHM:-1280m}
     deploy:
       resources:
         limits:
-          cpus: "8"
-          memory: 30G
+          # MUST NOT exceed the host's CPU count — Docker refuses to create the
+          # container otherwise ("range of CPUs is from 0.01 to 4.00, as there
+          # are only 4 CPUs available"). deploy.sh derives this from nproc.
+          cpus: "${DB_CPUS:-1}"
+          # Unlike cpus, an over-large memory cap is accepted silently and only
+          # shows up later as a failed start or an OOM kill. deploy.sh sets it
+          # to 75% of real RAM.
+          memory: ${DB_MEMORY:-4096M}
     sysctls:
       - net.core.somaxconn=4096
     ulimits:
