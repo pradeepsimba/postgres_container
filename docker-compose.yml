@@ -47,17 +47,7 @@ services:
     # /dev/shm must cover shared_buffers (parallel workers use it too); Docker's
     # 64MB default is far too small for Postgres.
     shm_size: ${DB_SHM:-1280m}
-    deploy:
-      resources:
-        limits:
-          # MUST NOT exceed the host's CPU count — Docker refuses to create the
-          # container otherwise ("range of CPUs is from 0.01 to 4.00, as there
-          # are only 4 CPUs available"). deploy.sh derives this from nproc.
-          cpus: "${DB_CPUS:-1}"
-          # Unlike cpus, an over-large memory cap is accepted silently and only
-          # shows up later as a failed start or an OOM kill. deploy.sh sets it
-          # to 75% of real RAM.
-          memory: ${DB_MEMORY:-4096M}
+    # No deploy.resources.limits: the container can use all host CPU and RAM.
     sysctls:
       - net.core.somaxconn=4096
     ulimits:
