@@ -27,6 +27,17 @@ server() {
 
     sudo systemctl enable --now docker
 
+    # docker-compose-plugin only registers `docker compose` (space), not the
+    # standalone `docker-compose` binary. Shim it so old `docker-compose`
+    # invocations (scripts, muscle memory) keep working.
+    if ! command -v docker-compose > /dev/null; then
+        sudo tee /usr/local/bin/docker-compose > /dev/null <<'EOSH'
+#!/bin/sh
+exec docker compose "$@"
+EOSH
+        sudo chmod +x /usr/local/bin/docker-compose
+    fi
+
     # ------------------------
     # Ensure docker group exists & user added
     # ------------------------
