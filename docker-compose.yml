@@ -63,7 +63,12 @@ services:
         max-size: "100m"
         max-file: "10"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d algo && psql -U postgres -d algo -c 'SELECT 1'"]
+      # Was only checking 'algo' - none of the 5 databases actually created for the trading
+      # services (see initdb/*.sql: trading_db, finvasia, mano_trading_db, kotak_neo, angel_one)
+      # were checked at all, so a per-database problem in any of those (e.g. that DB's own
+      # corruption, or a role/permission issue scoped to it) wouldn't flip this container's health
+      # status even though a dependent service would be failing against it right now.
+      test: ["CMD-SHELL", "pg_isready -U postgres && for db in algo trading_db finvasia mano_trading_db kotak_neo angel_one; do psql -U postgres -d \"$$db\" -c 'SELECT 1' >/dev/null || exit 1; done"]
       interval: 10s
       timeout: 5s
       retries: 5
