@@ -3,6 +3,7 @@ CREATE DATABASE finvasia;
 CREATE DATABASE mano_trading_db;
 CREATE DATABASE kotak_neo;
 CREATE DATABASE angel_one;
+CREATE DATABASE nifty;
 
 -- postgres.conf already loads pg_stat_statements via shared_preload_libraries, but that only
 -- reserves the shared-memory tracking - the module's actual stats VIEW is inaccessible in a
@@ -25,4 +26,6 @@ CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
 \connect kotak_neo
 CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
 \connect angel_one
+CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+\connect nifty
 CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
